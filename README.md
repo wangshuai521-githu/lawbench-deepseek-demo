@@ -11,6 +11,31 @@ This project adapts the open-source LegalBench benchmark into an interactive eva
 - stores benchmark artifacts locally
 - provides a browser UI for task exploration and interaction
 
+## Dataset design and system thinking
+
+This project is built around the structure of LegalBench rather than a one-off prompt script.
+
+Core design idea:
+
+1. one benchmark task maps to one task directory
+2. each task directory contains:
+   - task description in `README.md`
+   - prompt template in `base_prompt.txt`
+   - dataset rows in `train.tsv` and/or `test.tsv`
+3. each dataset row is rendered into the prompt template
+4. the backend sends the rendered prompt to DeepSeek
+5. the system normalizes the model output and compares it with the gold answer
+
+Why this matters:
+
+- it shows understanding of benchmark dataset organization
+- it turns dataset structure into reusable backend and frontend abstractions
+- it supports both interactive inference and repeatable small-batch evaluation
+
+Related design note:
+
+- `docs/frontend-backend-design.md`
+
 ## Project structure
 
 - `backend/server.py`: Python backend and API
@@ -27,6 +52,9 @@ If you want to understand or present the project quickly, start here:
 - `HR-PITCH.md`: short HR-facing project introduction
 - `TECH-PITCH.md`: technical interviewer-facing project introduction
 - `INTERVIEW-SCRIPT.md`: one-minute interview explanation
+- `RESUME-ENTRY.md`: resume-ready project bullets
+- `RECORDING-SCRIPT.md`: 1-2 minute demo recording script
+- `SELF-INTRO-PROJECT.md`: how to mention the project in self-introduction
 - `LOCAL-DEMO-STEPS.md`: shortest local demo steps
 - `HR-OVERVIEW.md`: offline share note for HR or interviewers
 
