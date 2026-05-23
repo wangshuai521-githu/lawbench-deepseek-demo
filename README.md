@@ -18,7 +18,17 @@ This project adapts the open-source LegalBench benchmark into an interactive eva
 - `legalbench-main/`: LegalBench source data
 - `docs/frontend-backend-design.md`: dataset and system design notes
 - `DEPLOY-RENDER.md`: public deployment guide
-- `GITHUB-UPLOAD.md`: GitHub upload guide
+- `GIT-HOSTING.md`: remote hosting guide
+
+## Quick entry points
+
+If you want to understand or present the project quickly, start here:
+
+- `HR-PITCH.md`: short HR-facing project introduction
+- `TECH-PITCH.md`: technical interviewer-facing project introduction
+- `INTERVIEW-SCRIPT.md`: one-minute interview explanation
+- `LOCAL-DEMO-STEPS.md`: shortest local demo steps
+- `HR-OVERVIEW.md`: offline share note for HR or interviewers
 
 ## Local run
 
@@ -55,3 +65,12 @@ For offline demos or HR sharing, use:
 - `HR-OVERVIEW.md`
 - `LOCAL-DEMO-STEPS.md`
 - `build-share-package.ps1`
+
+## Recommended sharing strategy
+
+At the current stage, the best presentation combination is:
+
+1. source code on Gitee
+2. local interactive demo for live interviews
+3. offline dashboard for fast result viewing
+4. HR-facing and interviewer-facing written summaries
