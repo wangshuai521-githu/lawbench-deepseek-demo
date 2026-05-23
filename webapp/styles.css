@@ -1,0 +1,266 @@
+:root {
+  --bg: #f6f2e8;
+  --panel: #fffaf2;
+  --ink: #1f2933;
+  --muted: #617181;
+  --accent: #0f766e;
+  --accent2: #b45309;
+  --border: #e7dbc5;
+  --shadow: 0 14px 40px rgba(31, 41, 51, 0.08);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Georgia, serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(180, 83, 9, 0.14), transparent 26%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 24%),
+    linear-gradient(180deg, #fbf8f1 0%, var(--bg) 100%);
+}
+
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+}
+
+.sidebar {
+  padding: 24px;
+  border-right: 1px solid var(--border);
+  background: rgba(255, 250, 242, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+.main {
+  padding: 28px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+h1, h2, h3 {
+  margin: 0 0 12px;
+}
+
+.brand {
+  margin-bottom: 24px;
+}
+
+.brand-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.panel, .card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.panel {
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.card {
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+select, input, button {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font: inherit;
+}
+
+button {
+  background: linear-gradient(135deg, var(--accent), #115e59);
+  color: white;
+  border: 0;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.03);
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.badge {
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: var(--accent);
+  padding: 10px 14px;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.rich-content {
+  font-family: "Segoe UI", sans-serif;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.rich-content h1,
+.rich-content h2,
+.rich-content h3 {
+  margin: 0 0 10px;
+}
+
+.rich-content p,
+.rich-content ul {
+  margin: 0 0 14px;
+}
+
+.rich-content ul {
+  padding-left: 20px;
+}
+
+.rich-content a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.rich-content code {
+  background: #f6efe1;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.explain-block {
+  display: grid;
+  gap: 14px;
+}
+
+.explain-item {
+  padding: 14px;
+  border-radius: 14px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+}
+
+.explain-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.explain-body {
+  font-family: "Segoe UI", sans-serif;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.flow-list {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-step {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border-radius: 14px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+  font-family: "Segoe UI", sans-serif;
+}
+
+.flow-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #e6fffb;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 980px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .grid, .grid2 {
+    grid-template-columns: 1fr;
+  }
+}

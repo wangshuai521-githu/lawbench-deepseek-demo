@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LegalBench 法律评测交互平台</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="eyebrow">交互式法律评测</div>
+        <h1>LegalBench x DeepSeek</h1>
+        <p class="brand-note">用于展示法律任务数据集结构、Prompt 模板、单条推理结果与批量评测表现。</p>
+      </div>
+      <div class="panel">
+        <label>任务</label>
+        <select id="taskSelect"></select>
+      </div>
+      <div class="panel grid2">
+        <div>
+          <label>数据划分</label>
+          <select id="splitSelect">
+            <option value="test">test</option>
+            <option value="train">train</option>
+          </select>
+        </div>
+        <div>
+          <label>模型</label>
+          <input id="modelInput" value="deepseek-v4-flash">
+        </div>
+      </div>
+      <div class="panel grid2">
+        <div>
+          <label>预览条数</label>
+          <input id="limitInput" type="number" min="1" max="50" value="10">
+        </div>
+        <div>
+          <label>样本索引</label>
+          <input id="rowIndexInput" type="number" min="0" value="0">
+        </div>
+      </div>
+      <div class="panel actions">
+        <button id="loadTaskBtn">加载任务信息</button>
+        <button id="runSampleBtn">运行单条样本</button>
+        <button id="runBatchBtn">执行批量评测</button>
+      </div>
+      <div class="panel">
+        <label>运行状态</label>
+        <pre id="statusBox">系统已就绪。</pre>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <div>
+          <div class="eyebrow">数据集浏览器</div>
+          <h2 id="taskTitle">请选择一个任务</h2>
+        </div>
+        <div class="badge" id="taskStats">-</div>
+      </section>
+
+      <section class="card">
+        <h3>任务说明</h3>
+        <div id="taskDescription" class="rich-content"></div>
+      </section>
+
+      <section class="card">
+        <h3>Prompt 模板</h3>
+        <pre id="promptTemplate"></pre>
+      </section>
+
+      <section class="card">
+        <h3>样本预览</h3>
+        <div id="samplesTable"></div>
+      </section>
+
+      <section class="grid">
+        <section class="card">
+          <h3>这个数据集是怎么组织的</h3>
+          <div class="explain-block" id="datasetDesign">
+            <div class="explain-item">
+              <div class="explain-title">1. 一个任务对应一个目录</div>
+              <div class="explain-body">例如 `opp115_data_security`、`hearsay`、`maud_definition_includes_asset_deals`，每个目录都代表一个具体法律评测任务。</div>
+            </div>
+            <div class="explain-item">
+              <div class="explain-title">2. 目录内包含说明、Prompt 与数据表</div>
+              <div class="explain-body">常见文件包括 `README.md`、`base_prompt.txt`、`train.tsv`、`test.tsv`。前端读取这些信息，后端据此构造评测请求。</div>
+            </div>
+            <div class="explain-item">
+              <div class="explain-title">3. 每一行样本都是一次待评测输入</div>
+              <div class="explain-body">表格中的 `text`、`answer` 等字段会被代入 Prompt 模板，组成模型真正看到的输入。</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>评测流程说明</h3>
+          <div class="flow-list">
+            <div class="flow-step"><span>01</span><div>选择任务与数据划分，例如 `train` 或 `test`。</div></div>
+            <div class="flow-step"><span>02</span><div>后端读取对应任务目录下的 Prompt 模板与 TSV 数据。</div></div>
+            <div class="flow-step"><span>03</span><div>将样本字段填入模板，生成最终 Prompt，并调用 DeepSeek API。</div></div>
+            <div class="flow-step"><span>04</span><div>对模型输出做归一化处理，例如提取 `Yes/No` 或 `A/B/C/D`。</div></div>
+            <div class="flow-step"><span>05</span><div>将预测结果与标准答案比对，得到单条结果或整体准确率。</div></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="grid">
+        <section class="card">
+          <h3>单条样本结果</h3>
+          <pre id="sampleResult">暂无结果。</pre>
+        </section>
+        <section class="card">
+          <h3>历史评测结果</h3>
+          <div id="runsTable"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

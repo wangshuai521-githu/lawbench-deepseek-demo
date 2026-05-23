@@ -1,0 +1,13 @@
+__pycache__/
+.DS_Store
+
+# Local generated benchmark outputs
+legalbench-main/outputs/
+dashboard/data.json
+
+# Local downloaded archives
+legalbench.zip
+
+# Editor and OS files
+Thumbs.db
+*.log

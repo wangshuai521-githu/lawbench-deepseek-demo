@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: legalbench-deepseek-demo
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python backend/server.py
+    healthCheckPath: /api/tasks
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_ROOT
+        value: /opt/render/project/src
+      - key: DEEPSEEK_API_KEY
+        sync: false

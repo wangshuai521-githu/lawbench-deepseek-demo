@@ -1,0 +1,2 @@
+# This project uses only Python standard library modules.
+# The file is kept so cloud platforms can detect a Python service cleanly.
