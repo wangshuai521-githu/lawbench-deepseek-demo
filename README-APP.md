@@ -81,4 +81,5 @@ python .\backend\server.py
 
 如果你准备部署到公网，优先看：
 
+- `GIT-HOSTING.md`
 - `DEPLOY-RENDER.md`

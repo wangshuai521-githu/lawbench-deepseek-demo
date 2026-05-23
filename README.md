@@ -39,9 +39,19 @@ Open:
 - `opp115_policy_change`
 - `maud_definition_includes_asset_deals`
 
-## Deployment
+## Deployment and hosting
 
 Use:
 
-- `GITHUB-UPLOAD.md`
+- `GIT-HOSTING.md`
 - `DEPLOY-RENDER.md`
+
+If GitHub is not accessible from your current network, use Gitee first and mirror later.
+
+## Offline sharing
+
+For offline demos or HR sharing, use:
+
+- `HR-OVERVIEW.md`
+- `LOCAL-DEMO-STEPS.md`
+- `build-share-package.ps1`
