@@ -9,3 +9,6 @@ outputs/
 # Optional local prediction artifacts
 lawbench-opencompass/predictions/zero_shot/deepseek-v4-flash/
 lawbench-opencompass/predictions/one_shot/deepseek-v4-flash/
+
+# Local transfer/package artifacts
+*.bundle

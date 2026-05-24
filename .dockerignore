@@ -1,0 +1,16 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+Thumbs.db
+outputs/
+lawbench-deepseek-demo.bundle
+render.yaml
+DEPLOY-RENDER-LAWBENCH.md
+GITHUB-UPLOAD-LAWBENCH.md
+start-lawbench-demo.ps1
+run-lawbench-deepseek.ps1
+build-share-package.ps1
