@@ -1,13 +1,11 @@
 __pycache__/
 .DS_Store
-
-# Local generated benchmark outputs
-legalbench-main/outputs/
-dashboard/data.json
-
-# Local downloaded archives
-legalbench.zip
-
-# Editor and OS files
 Thumbs.db
 *.log
+
+# Local generated benchmark outputs
+outputs/
+
+# Optional local prediction artifacts
+lawbench-opencompass/predictions/zero_shot/deepseek-v4-flash/
+lawbench-opencompass/predictions/one_shot/deepseek-v4-flash/

@@ -3,119 +3,155 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LegalBench 法律评测交互平台</title>
+  <title>LawBench 中文法律评测演示平台</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <div class="shell">
+  <div class="layout">
     <aside class="sidebar">
       <div class="brand">
-        <div class="eyebrow">交互式法律评测</div>
-        <h1>LegalBench x DeepSeek</h1>
-        <p class="brand-note">用于展示法律任务数据集结构、Prompt 模板、单条推理结果与批量评测表现。</p>
+        <div class="eyebrow">Chinese Legal Benchmark Demo</div>
+        <h1>LawBench x DeepSeek</h1>
+        <p>这是一个围绕 <code>open-compass/LawBench</code> 搭建的中文法律大模型评测演示平台。页面同时展示数据集设计、任务结构、样本预览、单条推理和批量评测结果。</p>
       </div>
-      <div class="panel">
-        <label>任务</label>
+
+      <section class="panel">
+        <h2>运行控制</h2>
+        <label for="taskSelect">任务</label>
         <select id="taskSelect"></select>
-      </div>
-      <div class="panel grid2">
-        <div>
-          <label>数据划分</label>
-          <select id="splitSelect">
-            <option value="test">test</option>
-            <option value="train">train</option>
-          </select>
+
+        <label for="shotSelect">Prompt 设置</label>
+        <select id="shotSelect">
+          <option value="zero_shot">zero_shot</option>
+          <option value="one_shot">one_shot</option>
+        </select>
+
+        <label for="modelInput">模型</label>
+        <input id="modelInput" value="deepseek-v4-flash">
+
+        <div class="grid-two">
+          <div>
+            <label for="sampleIndexInput">样本索引</label>
+            <input id="sampleIndexInput" type="number" min="0" value="0">
+          </div>
+          <div>
+            <label for="sampleLimitInput">预览条数</label>
+            <input id="sampleLimitInput" type="number" min="1" max="20" value="6">
+          </div>
         </div>
-        <div>
-          <label>模型</label>
-          <input id="modelInput" value="deepseek-v4-flash">
+
+        <div class="grid-two">
+          <div>
+            <label for="batchSizeInput">批量样本数</label>
+            <input id="batchSizeInput" type="number" min="1" max="100" value="5">
+          </div>
+          <div>
+            <label for="timeoutInput">超时秒数</label>
+            <input id="timeoutInput" type="number" min="30" max="300" value="120">
+          </div>
         </div>
-      </div>
-      <div class="panel grid2">
-        <div>
-          <label>预览条数</label>
-          <input id="limitInput" type="number" min="1" max="50" value="10">
+
+        <div class="actions">
+          <button id="refreshTaskBtn">加载任务信息</button>
+          <button id="runSampleBtn">运行单条样本</button>
+          <button id="runBatchBtn">运行批量评测</button>
         </div>
-        <div>
-          <label>样本索引</label>
-          <input id="rowIndexInput" type="number" min="0" value="0">
-        </div>
-      </div>
-      <div class="panel actions">
-        <button id="loadTaskBtn">加载任务信息</button>
-        <button id="runSampleBtn">运行单条样本</button>
-        <button id="runBatchBtn">执行批量评测</button>
-      </div>
-      <div class="panel">
-        <label>运行状态</label>
-        <pre id="statusBox">系统已就绪。</pre>
-      </div>
+
+        <div class="inline-note" id="batchSupportNote">批量评测支持单选题任务：1-2、2-4、2-8、3-6</div>
+      </section>
+
+      <section class="panel">
+        <h2>系统状态</h2>
+        <pre id="statusBox">正在加载页面...</pre>
+      </section>
     </aside>
 
     <main class="main">
       <section class="hero">
         <div>
-          <div class="eyebrow">数据集浏览器</div>
-          <h2 id="taskTitle">请选择一个任务</h2>
+          <div class="eyebrow">Benchmark Overview</div>
+          <h2 id="heroTitle">LawBench 中文法律评测基准</h2>
+          <p id="heroSubtitle">正在读取基准信息...</p>
         </div>
-        <div class="badge" id="taskStats">-</div>
+        <div class="hero-badge" id="heroBadge">-</div>
+      </section>
+
+      <section class="stats-grid" id="statsGrid"></section>
+
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Dataset Design</div>
+            <h3>数据集设计说明</h3>
+          </div>
+        </div>
+        <div class="rich-content" id="designDoc"></div>
       </section>
 
       <section class="card">
-        <h3>任务说明</h3>
-        <div id="taskDescription" class="rich-content"></div>
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Task Catalog</div>
+            <h3>20 个任务总览</h3>
+          </div>
+        </div>
+        <div id="taskCatalogTable"></div>
       </section>
 
-      <section class="card">
-        <h3>Prompt 模板</h3>
-        <pre id="promptTemplate"></pre>
-      </section>
-
-      <section class="card">
-        <h3>样本预览</h3>
-        <div id="samplesTable"></div>
-      </section>
-
-      <section class="grid">
+      <section class="grid-main">
         <section class="card">
-          <h3>这个数据集是怎么组织的</h3>
-          <div class="explain-block" id="datasetDesign">
-            <div class="explain-item">
-              <div class="explain-title">1. 一个任务对应一个目录</div>
-              <div class="explain-body">例如 `opp115_data_security`、`hearsay`、`maud_definition_includes_asset_deals`，每个目录都代表一个具体法律评测任务。</div>
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Task Detail</div>
+              <h3 id="taskTitle">任务详情</h3>
             </div>
-            <div class="explain-item">
-              <div class="explain-title">2. 目录内包含说明、Prompt 与数据表</div>
-              <div class="explain-body">常见文件包括 `README.md`、`base_prompt.txt`、`train.tsv`、`test.tsv`。前端读取这些信息，后端据此构造评测请求。</div>
-            </div>
-            <div class="explain-item">
-              <div class="explain-title">3. 每一行样本都是一次待评测输入</div>
-              <div class="explain-body">表格中的 `text`、`answer` 等字段会被代入 Prompt 模板，组成模型真正看到的输入。</div>
+            <div class="mini-badge" id="taskTag">-</div>
+          </div>
+          <div class="rich-content" id="taskDescription"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Prompt Shape</div>
+              <h3>Prompt 结构与预览</h3>
             </div>
           </div>
-        </section>
-
-        <section class="card">
-          <h3>评测流程说明</h3>
-          <div class="flow-list">
-            <div class="flow-step"><span>01</span><div>选择任务与数据划分，例如 `train` 或 `test`。</div></div>
-            <div class="flow-step"><span>02</span><div>后端读取对应任务目录下的 Prompt 模板与 TSV 数据。</div></div>
-            <div class="flow-step"><span>03</span><div>将样本字段填入模板，生成最终 Prompt，并调用 DeepSeek API。</div></div>
-            <div class="flow-step"><span>04</span><div>对模型输出做归一化处理，例如提取 `Yes/No` 或 `A/B/C/D`。</div></div>
-            <div class="flow-step"><span>05</span><div>将预测结果与标准答案比对，得到单条结果或整体准确率。</div></div>
-          </div>
+          <div class="prompt-schema" id="promptSchema"></div>
+          <pre id="promptPreview"></pre>
         </section>
       </section>
 
-      <section class="grid">
+      <section class="grid-main">
         <section class="card">
-          <h3>单条样本结果</h3>
-          <pre id="sampleResult">暂无结果。</pre>
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Sample Preview</div>
+              <h3>样本预览</h3>
+            </div>
+          </div>
+          <div id="samplesTable"></div>
         </section>
+
         <section class="card">
-          <h3>历史评测结果</h3>
-          <div id="runsTable"></div>
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Result</div>
+              <h3>运行结果</h3>
+            </div>
+          </div>
+          <pre id="resultBox">暂未运行。</pre>
         </section>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Run History</div>
+            <h3>历史评测记录</h3>
+          </div>
+        </div>
+        <div id="runsTable"></div>
       </section>
     </main>
   </div>

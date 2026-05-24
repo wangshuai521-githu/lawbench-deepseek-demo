@@ -1,104 +1,99 @@
-# LegalBench x DeepSeek Interactive Demo
+# LawBench x DeepSeek 中文法律评测演示平台
 
-This project adapts the open-source LegalBench benchmark into an interactive evaluation app for DeepSeek models.
+这个项目基于正确的仓库 `open-compass/LawBench` 搭建，目标不是只跑一个脚本，而是把：
 
-## What this project does
+- 数据集设计
+- DeepSeek 接入
+- 单条推理
+- 小批量评测
+- 前端可视化展示
 
-- loads LegalBench task folders and prompt templates
-- previews dataset samples from `train.tsv` and `test.tsv`
-- runs single-sample inference through the DeepSeek API
-- runs small batch evaluations and computes accuracy
-- stores benchmark artifacts locally
-- provides a browser UI for task exploration and interaction
+做成一套能本地演示、也能后续部署上线的完整 demo。
 
-## Dataset design and system thinking
+## 项目结构
 
-This project is built around the structure of LegalBench rather than a one-off prompt script.
-
-Core design idea:
-
-1. one benchmark task maps to one task directory
-2. each task directory contains:
-   - task description in `README.md`
-   - prompt template in `base_prompt.txt`
-   - dataset rows in `train.tsv` and/or `test.tsv`
-3. each dataset row is rendered into the prompt template
-4. the backend sends the rendered prompt to DeepSeek
-5. the system normalizes the model output and compares it with the gold answer
-
-Why this matters:
-
-- it shows understanding of benchmark dataset organization
-- it turns dataset structure into reusable backend and frontend abstractions
-- it supports both interactive inference and repeatable small-batch evaluation
-
-Related design note:
-
+- `lawbench-opencompass/`
+  说明：官方 LawBench 仓库
+- `lawbench-opencompass/run_deepseek_lawbench.py`
+  说明：LawBench 专用 DeepSeek runner
+- `run-lawbench-deepseek.ps1`
+  说明：PowerShell 启动脚本
+- `backend/server.py`
+  说明：中文后端 API
+- `webapp/`
+  说明：中文前端页面
 - `docs/frontend-backend-design.md`
+  说明：数据集设计与系统设计说明
+- `outputs/`
+  说明：页面触发的批量评测运行记录
 
-## Project structure
+## 当前能力
 
-- `backend/server.py`: Python backend and API
-- `webapp/`: frontend UI
-- `legalbench-main/`: LegalBench source data
-- `docs/frontend-backend-design.md`: dataset and system design notes
-- `DEPLOY-RENDER.md`: public deployment guide
-- `GIT-HOSTING.md`: remote hosting guide
+### 已完成
 
-## Quick entry points
+- 正确切换到 `LawBench`
+- 使用 DeepSeek 成功跑通 `1-2` 任务
+- 页面可展示 20 个任务的设计信息
+- 页面可预览 `zero_shot` / `one_shot` 样本
+- 页面可发起单条推理
+- 页面可对单选题执行小批量自动评分
 
-If you want to understand or present the project quickly, start here:
+### 当前在线批量评测支持的任务
 
-- `HR-PITCH.md`: short HR-facing project introduction
-- `TECH-PITCH.md`: technical interviewer-facing project introduction
-- `INTERVIEW-SCRIPT.md`: one-minute interview explanation
-- `RESUME-ENTRY.md`: resume-ready project bullets
-- `RECORDING-SCRIPT.md`: 1-2 minute demo recording script
-- `SELF-INTRO-PROJECT.md`: how to mention the project in self-introduction
-- `LOCAL-DEMO-STEPS.md`: shortest local demo steps
-- `HR-OVERVIEW.md`: offline share note for HR or interviewers
+- `1-2`
+- `2-4`
+- `2-8`
+- `3-6`
 
-## Local run
+原因很直接：这四个任务都是单选题，模型输出可以稳定归一化为 `A/B/C/D`，自动评分最稳。
+
+## 本地运行
+
+如果你的 PowerShell 里已经设置过：
+
+```powershell
+$env:DEEPSEEK_API_KEY="你的 key"
+```
+
+那么运行后端：
 
 ```powershell
 Set-Location "C:\Users\wang'shuai\Documents\Codex\2026-05-22\lawbench-github-api-deepseek-github-lawbench"
-$env:DEEPSEEK_API_KEY="your_api_key_here"
-python .\backend\server.py
+& "D:\Program Files\IBM\SPSS\Statistics\27\Python3\python.exe" .\backend\server.py
 ```
 
-Open:
+打开浏览器访问：
 
-- `http://127.0.0.1:8787`
+```text
+http://127.0.0.1:8787
+```
 
-## Demo tasks already tested
+## 命令行跑一个官方任务
 
-- `hearsay`
-- `opp115_data_security`
-- `opp115_policy_change`
-- `maud_definition_includes_asset_deals`
+```powershell
+.\run-lawbench-deepseek.ps1 -TaskId 1-2 -Shot zero_shot -Model deepseek-v4-flash -MaxSamples 5
+```
 
-## Deployment and hosting
+## 页面里能展示什么
 
-Use:
+这个前端页面不是普通聊天页，而是围绕 benchmark 设计的：
 
-- `GIT-HOSTING.md`
-- `DEPLOY-RENDER.md`
+- LawBench 总览
+- 20 个任务目录表
+- 数据集设计说明
+- 单个任务的层级、指标、类型、来源
+- 样本预览
+- Prompt 结构预览
+- 单条样本运行结果
+- 历史评测记录
 
-If GitHub is not accessible from your current network, use Gitee first and mirror later.
+## 部署方向
 
-## Offline sharing
+这套项目后续可以部署到 Render 一类平台，形成公网可访问的演示链接。
 
-For offline demos or HR sharing, use:
+部署前要注意两点：
 
-- `HR-OVERVIEW.md`
-- `LOCAL-DEMO-STEPS.md`
-- `build-share-package.ps1`
+1. 线上环境必须配置 `DEEPSEEK_API_KEY`
+2. 线上 Python 运行时必须能直接启动 `backend/server.py`
 
-## Recommended sharing strategy
-
-At the current stage, the best presentation combination is:
-
-1. source code on Gitee
-2. local interactive demo for live interviews
-3. offline dashboard for fast result viewing
-4. HR-facing and interviewer-facing written summaries
+当前仓库已经保留了 `render.yaml` 入口，后面可以继续沿这个方向上线。

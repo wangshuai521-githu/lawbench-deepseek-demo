@@ -1,6 +1,6 @@
 param(
     [string]$SourceRoot = "C:\Users\wang'shuai\Documents\Codex\2026-05-22\lawbench-github-api-deepseek-github-lawbench",
-    [string]$OutputRoot = "C:\Users\wang'shuai\Documents\Codex\share-package\legalbench-deepseek-demo"
+    [string]$OutputRoot = "C:\Users\wang'shuai\Documents\Codex\share-package\lawbench-deepseek-demo"
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,24 +13,14 @@ New-Item -ItemType Directory -Path $OutputRoot | Out-Null
 
 $includePaths = @(
     "backend",
-    "dashboard",
     "docs",
-    "legalbench-main",
+    "lawbench-opencompass",
     "webapp",
     ".gitignore",
     "README.md",
-    "README-APP.md",
-    "README-PROJECT.md",
-    "DEPLOY-RENDER.md",
-    "GIT-HOSTING.md",
-    "HOWTO-DEEPSEEK-LAWBENCH.md",
     "render.yaml",
     "requirements.txt",
-    "run-demo-benchmark.ps1",
-    "run-legalbench-deepseek.ps1",
-    "build-dashboard.ps1",
-    "HR-OVERVIEW.md",
-    "LOCAL-DEMO-STEPS.md"
+    "run-lawbench-deepseek.ps1"
 )
 
 foreach ($item in $includePaths) {
@@ -49,8 +39,8 @@ foreach ($item in $includePaths) {
     }
 }
 
-$outputsSrc = Join-Path $SourceRoot "legalbench-main\outputs"
-$outputsDst = Join-Path $OutputRoot "legalbench-main\outputs"
+$outputsSrc = Join-Path $SourceRoot "outputs"
+$outputsDst = Join-Path $OutputRoot "outputs"
 if (Test-Path -LiteralPath $outputsSrc) {
     Copy-Item -LiteralPath $outputsSrc -Destination $outputsDst -Recurse -Force
 }

@@ -1,134 +1,137 @@
-# LegalBench dataset design and app mapping
+# LawBench 数据集设计与前后端映射
 
-## 1. What the dataset looks like
+## 1. 数据集本体长什么样
 
-Each LegalBench task is a folder under:
+这次项目使用的是 `open-compass/LawBench`，不是英文的 `LegalBench`。
 
-`legalbench-main\tasks\<task_name>\`
+LawBench 的核心特点：
 
-Typical files inside a task folder:
+- 基于中国法律体系
+- 一共 20 个任务
+- 覆盖 3 个司法认知层级
+- 每个任务官方提供 500 条样本
+- 每个任务同时提供 `zero_shot` 和 `one_shot` 两种 Prompt 设置
 
-- `README.md`: task description, labels, and legal meaning
-- `base_prompt.txt`: prompt template
-- `train.tsv`: training split
-- `test.tsv`: test split, if provided
+数据文件位于：
 
-## 2. Core abstraction
+- `lawbench-opencompass/data/zero_shot/<task_id>.json`
+- `lawbench-opencompass/data/one_shot/<task_id>.json`
 
-For app development, each task can be modeled as:
+每个 JSON 文件本质上是一个列表，每一条样本都包含：
 
-- `task_name`
-- `task_title`
-- `task_type`
-- `prompt_template`
-- `available_splits`
-- `columns`
-- `samples`
-
-Each sample row can be modeled as:
-
-- `index`
-- `fields`: all dataset columns
+- `instruction`
+- `question`
 - `answer`
 
-Each benchmark run can be modeled as:
+## 2. 前端为什么适合展示它
+
+LawBench 很适合做交互页面，因为它不是一堆散乱文本，而是天然具备结构化字段：
+
+- 任务级信息：任务 ID、任务名、认知层级、指标、类型、数据来源
+- 样本级信息：instruction、question、answer
+- 运行级信息：模型、Prompt 设置、预测结果、准确率、弃权率
+
+这意味着前端可以直接拆成三个展示维度：
+
+- 数据集怎么设计
+- 某个任务的数据样本长什么样
+- 某个模型在这个任务上跑出来的结果怎么样
+
+## 3. 这次项目的核心抽象
+
+为了让页面和后端都能通用化，这个项目把 LawBench 抽象成了下面三层：
+
+### 任务层
+
+- `task_id`
+- `name_zh`
+- `name_en`
+- `level`
+- `metric`
+- `task_type`
+- `source`
+- `online_batch`
+
+### 样本层
+
+- `instruction`
+- `question`
+- `answer`
+- `sample_index`
+
+### 运行层
 
 - `run_id`
-- `task_name`
-- `split`
+- `task_id`
+- `shot`
 - `model`
 - `sample_count`
 - `accuracy`
+- `abstention_rate`
 - `results`
 
-Each prediction result can be modeled as:
+## 4. Prompt 是怎么拼出来的
 
-- `index`
-- `gold`
-- `prediction`
-- `correct`
-- `raw_output`
+LawBench 这一版演示没有再额外寻找单独的 Prompt 模板文件，而是直接按照官方数据结构拼接：
 
-## 3. Why this maps well to a frontend
+- `instruction + "\n\n" + question`
 
-Because LegalBench uses prompt templates plus tabular data, the frontend can support:
+这有两个好处：
 
-- choosing a task
-- previewing the prompt template
-- previewing sample rows
-- running one sample interactively
-- running a batch evaluation
-- browsing saved benchmark runs
+- 和官方 JSON 数据格式完全对齐
+- 前端也更容易把“数据集设计”讲清楚
 
-## 4. Recommended architecture
+也就是说，页面上展示出来的 Prompt，不是拍脑袋写的，而是从数据集字段直接生成的。
 
-Frontend:
+## 5. 为什么在线批量评测先支持单选题
 
-- plain HTML + CSS + JavaScript for the first version
-- optional upgrade path: React or Vue later
+LawBench 20 个任务里既有：
 
-Backend:
+- 单选题
+- 多选题
+- 抽取题
+- 生成题
+- 回归题
 
-- Python HTTP server
-- reads LegalBench files
-- renders prompt templates
-- calls DeepSeek API
-- stores run artifacts as JSON
+如果目标是先做一个稳定、能上线、能演示的系统，那么第一步应该优先支持自动评分最稳定的任务类型，也就是单选题。
 
-## 5. Suggested API design
+所以当前在线批量评测先支持：
 
-- `GET /api/tasks`
-  returns task list and metadata
+- `1-2`
+- `2-4`
+- `2-8`
+- `3-6`
 
-- `GET /api/tasks/<task_name>`
-  returns task README summary, prompt template, columns, split sizes
+这些任务都可以直接把模型输出归一化为 `A/B/C/D`，再和标准答案做自动比对。
 
-- `GET /api/tasks/<task_name>/samples?split=test&limit=20`
-  returns sample rows for preview
+## 6. 这套前后端是怎么配合的
 
-- `POST /api/run-sample`
-  input: task, split, row index, model
-  output: prompt, gold answer, prediction, raw model output
+前端负责：
 
-- `POST /api/run-batch`
-  input: task, split, model, max_samples
-  output: run summary and saved file path
+- 展示 LawBench 总体设计
+- 展示 20 个任务目录化后的结构信息
+- 预览样本
+- 发起单条推理和批量评测
+- 展示历史运行结果
 
-- `GET /api/runs`
-  returns saved benchmark runs
+后端负责：
 
-- `GET /api/runs/<run_id>`
-  returns one saved run in detail
+- 读取 LawBench 官方 JSON 数据
+- 生成 Prompt
+- 调用 DeepSeek API
+- 对单选题做自动评分
+- 把结果写回：
 
-## 6. Frontend page design
+  - `lawbench-opencompass/predictions/...`
+  - `outputs/...`
 
-Page 1: task explorer
+## 7. 为什么这个项目适合面试展示
 
-- task list
-- task description
-- prompt preview
-- sample preview
+因为它不只是“我接了一个模型 API”。
 
-Page 2: interactive evaluator
+它完整体现了下面四件事：
 
-- choose task
-- choose split
-- choose model
-- choose sample count
-- run one sample or one batch
-
-Page 3: results dashboard
-
-- run history
-- accuracy table
-- per-sample result details
-
-## 7. Why start with plain HTML instead of React/Vue
-
-For this project stage, plain HTML is enough because:
-
-- the data model is already the important part
-- backend and prompt flow are the core engineering story
-- it avoids spending time on build tooling too early
-
-After the backend is stable, upgrading the UI to React or Vue is straightforward.
+- 你能读懂一个真实开源 benchmark 的数据结构
+- 你能把 benchmark 抽象成通用前后端对象
+- 你能把模型调用、结果归一化和评测流程串起来
+- 你能把工程做成别人可以直接看的交互界面
