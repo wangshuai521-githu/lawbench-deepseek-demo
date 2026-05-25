@@ -107,7 +107,7 @@ function renderTaskCatalog() {
 function renderRuns(runs) {
   const host = document.getElementById("runsTable");
   if (!runs.length) {
-    host.innerHTML = "<p class='empty'>还没有保存的批量评测记录。</p>";
+    host.innerHTML = "<p class='empty'>还没有可展示的批量评测记录。这里只显示当前环境中通过“运行批量评测”保存下来的结果，单条样本运行不会进入历史；云端环境重启或缩容后，未做持久化的本地文件记录也可能清空。</p>";
     return;
   }
   host.innerHTML = `
