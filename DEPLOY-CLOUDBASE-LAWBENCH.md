@@ -3,11 +3,11 @@
 这份说明对应当前项目：
 
 - GitHub 仓库：`wangshuai521-githu/lawbench-deepseek-demo`
-- 后端入口：`backend/server.py`
+- 后端入口：`backend/app.py`
 - 前端目录：`webapp/`
 - 数据集目录：`lawbench-opencompass/`
 
-当前项目已经补好了 `Dockerfile`，可以直接按腾讯云 CloudBase 云托管的 Git 仓库部署方式上线。
+当前项目已经补好了 `Dockerfile`，并升级为 `FastAPI + Vue 3` 演示架构，可以直接按腾讯云 CloudBase 云托管的 Git 仓库部署方式上线。
 
 ## 1. 这条路线的定位
 
@@ -76,6 +76,7 @@
 
 - 项目代码里已经支持读取平台注入的 `PORT`
 - `Dockerfile` 默认也把容器监听端口设成了 `8080`
+- 当前启动命令已经内置为 `uvicorn backend.app:app --host 0.0.0.0 --port 8080`
 
 ## 6. 部署成功后如何验证
 

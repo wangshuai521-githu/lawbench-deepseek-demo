@@ -1,6 +1,13 @@
 # LawBench x DeepSeek 中文法律评测演示平台
 
-基于 `open-compass/LawBench` 搭建的中文法律大模型评测演示系统，支持：
+基于 `open-compass/LawBench` 搭建的中文法律大模型评测演示系统，当前采用：
+
+- `FastAPI` 后端接口层
+- `Vue 3` 单页交互界面
+- `DeepSeek` 模型接入
+- `Docker + 腾讯云 CloudBase Run` 云端部署
+
+支持：
 
 - LawBench 任务目录与数据集设计可视化
 - DeepSeek 模型接入
@@ -52,7 +59,7 @@
 
 ### 后端层
 
-- 使用 Python 标准库实现轻量 HTTP 服务
+- 使用 `FastAPI` 提供 API 服务
 - 读取 LawBench JSON 数据
 - 组织 Prompt
 - 调用 DeepSeek API
@@ -60,7 +67,7 @@
 
 ### 前端层
 
-- 中文单页展示界面
+- 使用 `Vue 3` 构建中文单页展示界面
 - 展示任务总览、样本预览、Prompt 结构、运行结果、历史记录
 
 ### 部署层
@@ -71,10 +78,12 @@
 
 ## 项目结构
 
+- `backend/app.py`
+  FastAPI 入口，负责 API 路由与静态页面返回
 - `backend/server.py`
-  中文后端 API，负责数据读取、推理调用、批量评测和结果保存
+  LawBench 评测核心逻辑与数据处理函数
 - `webapp/`
-  中文前端页面
+  Vue 3 风格单页前端页面
 - `lawbench-opencompass/`
   LawBench 官方仓库代码与数据
 - `docs/frontend-backend-design.md`
@@ -98,7 +107,7 @@ $env:DEEPSEEK_API_KEY="你的 key"
 
 ```powershell
 Set-Location "C:\Users\wang'shuai\Documents\Codex\2026-05-22\lawbench-github-api-deepseek-github-lawbench"
-& "D:\Program Files\IBM\SPSS\Statistics\27\Python3\python.exe" .\backend\server.py
+.\start-lawbench-demo.ps1
 ```
 
 浏览器访问：
@@ -130,7 +139,7 @@ http://127.0.0.1:8787
 如果你是从求职作品集角度看这个项目，建议重点展示这四件事：
 
 1. 你选的是中文法律 benchmark，而不是普通通用问答 demo。
-2. 你把 benchmark 做成了前后端可交互系统，而不是离线脚本。
+2. 你把 benchmark 做成了 `FastAPI + Vue 3` 的前后端可交互系统，而不是离线脚本。
 3. 你完成了模型接入、评测归一化、自动评分和结果保存。
 4. 你已经把项目部署到了云端，形成公网可访问作品。
 

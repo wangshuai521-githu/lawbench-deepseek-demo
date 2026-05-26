@@ -1,2 +1,2 @@
-# This project uses only Python standard library modules.
-# The file is kept so cloud platforms can detect a Python service cleanly.
+fastapi==0.116.1
+uvicorn==0.30.6

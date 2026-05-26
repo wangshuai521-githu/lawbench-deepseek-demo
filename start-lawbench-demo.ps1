@@ -26,4 +26,4 @@ Write-Host "Starting LawBench demo server..."
 Write-Host "URL: http://$BindHost`:$Port"
 Write-Host ""
 
-& $PythonExe ".\backend\server.py"
+& $PythonExe "-m" "uvicorn" "backend.app:app" "--host" $BindHost "--port" ([string]$Port)

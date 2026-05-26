@@ -12,3 +12,7 @@ lawbench-opencompass/predictions/one_shot/deepseek-v4-flash/
 
 # Local transfer/package artifacts
 *.bundle
+
+# Optional Vue / Node workspace artifacts
+node_modules/
+dist/

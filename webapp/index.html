@@ -3,158 +3,281 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LawBench 中文法律评测演示平台</title>
-  <link rel="stylesheet" href="./styles.css">
+  <title>LawBench x DeepSeek 全栈演示平台</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="eyebrow">Chinese Legal Benchmark Demo</div>
-        <h1>LawBench x DeepSeek</h1>
-        <p>这是一个围绕 <code>open-compass/LawBench</code> 搭建的中文法律大模型评测演示平台。页面同时展示数据集设计、任务结构、样本预览、单条推理和批量评测结果。</p>
-      </div>
-
-      <section class="panel">
-        <h2>运行控制</h2>
-        <label for="taskSelect">任务</label>
-        <select id="taskSelect"></select>
-
-        <label for="shotSelect">Prompt 设置</label>
-        <select id="shotSelect">
-          <option value="zero_shot">zero_shot</option>
-          <option value="one_shot">one_shot</option>
-        </select>
-
-        <label for="modelInput">模型</label>
-        <input id="modelInput" value="deepseek-v4-flash">
-
-        <div class="grid-two">
-          <div>
-            <label for="sampleIndexInput">样本索引</label>
-            <input id="sampleIndexInput" type="number" min="0" value="0">
-          </div>
-          <div>
-            <label for="sampleLimitInput">预览条数</label>
-            <input id="sampleLimitInput" type="number" min="1" max="20" value="6">
-          </div>
-        </div>
-
-        <div class="grid-two">
-          <div>
-            <label for="batchSizeInput">批量样本数</label>
-            <input id="batchSizeInput" type="number" min="1" max="100" value="5">
-          </div>
-          <div>
-            <label for="timeoutInput">超时秒数</label>
-            <input id="timeoutInput" type="number" min="30" max="300" value="120">
-          </div>
-        </div>
-
-        <div class="actions">
-          <button id="refreshTaskBtn">加载任务信息</button>
-          <button id="runSampleBtn">运行单条样本</button>
-          <button id="runBatchBtn">运行批量评测</button>
-        </div>
-
-        <div class="inline-note" id="batchSupportNote">批量评测支持单选题任务：1-2、2-4、2-8、3-6</div>
-      </section>
-
-      <section class="panel">
-        <h2>系统状态</h2>
-        <pre id="statusBox">正在加载页面...</pre>
-      </section>
-    </aside>
-
-    <main class="main">
-      <section class="hero">
+  <div id="app">
+    <div class="shell">
+      <header class="topbar">
         <div>
-          <div class="eyebrow">Benchmark Overview</div>
-          <h2 id="heroTitle">LawBench 中文法律评测基准</h2>
-          <p id="heroSubtitle">正在读取基准信息...</p>
+          <div class="eyebrow">FastAPI · Vue 3 · LawBench · DeepSeek</div>
+          <h1>LawBench 中文法律评测驾驶舱</h1>
         </div>
-        <div class="hero-badge" id="heroBadge">-</div>
-      </section>
-
-      <section class="stats-grid" id="statsGrid"></section>
-
-      <section class="card">
-        <div class="section-head">
-          <div>
-            <div class="eyebrow">Dataset Design</div>
-            <h3>数据集设计说明</h3>
-          </div>
+        <div class="topbar-meta">
+          <span class="meta-pill">公网演示版</span>
+          <span class="meta-pill">{{ selectedTask?.task_id || '20 tasks' }}</span>
         </div>
-        <div class="rich-content" id="designDoc"></div>
-      </section>
+      </header>
 
-      <section class="card">
-        <div class="section-head">
-          <div>
-            <div class="eyebrow">Task Catalog</div>
-            <h3>20 个任务总览</h3>
-          </div>
-        </div>
-        <div id="taskCatalogTable"></div>
-      </section>
-
-      <section class="grid-main">
-        <section class="card">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Task Detail</div>
-              <h3 id="taskTitle">任务详情</h3>
-            </div>
-            <div class="mini-badge" id="taskTag">-</div>
-          </div>
-          <div class="rich-content" id="taskDescription"></div>
-        </section>
-
-        <section class="card">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Prompt Shape</div>
-              <h3>Prompt 结构与预览</h3>
+      <main class="workspace">
+        <section class="hero-panel">
+          <div class="hero-copy">
+            <p class="eyebrow">Chinese Legal Benchmark Platform</p>
+            <h2>{{ overview?.benchmark_name || 'LawBench' }} x DeepSeek</h2>
+            <p class="hero-text">
+              这是一个围绕 <code>open-compass/LawBench</code> 工程化改造的中文法律大模型评测系统。
+              前端使用 Vue 3 构建交互界面，后端使用 FastAPI 提供评测接口，支持样本浏览、单条推理、小批量自动评测与结果追踪。
+            </p>
+            <div class="hero-badges">
+              <span class="hero-chip">FastAPI API</span>
+              <span class="hero-chip">Vue 3 SPA</span>
+              <span class="hero-chip">Tencent CloudBase Run</span>
             </div>
           </div>
-          <div class="prompt-schema" id="promptSchema"></div>
-          <pre id="promptPreview"></pre>
+          <div class="hero-stats">
+            <article class="hero-stat">
+              <div class="stat-label">任务总数</div>
+              <div class="stat-value">{{ overview?.task_count || 0 }}</div>
+              <div class="stat-note">覆盖中文法律 benchmark 全量任务</div>
+            </article>
+            <article class="hero-stat">
+              <div class="stat-label">Prompt 方案</div>
+              <div class="stat-value stat-value--compact">{{ promptSettingsText }}</div>
+              <div class="stat-note">zero-shot 与 one-shot 双设置</div>
+            </article>
+          </div>
         </section>
-      </section>
 
-      <section class="grid-main">
-        <section class="card">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Sample Preview</div>
-              <h3>样本预览</h3>
+        <section class="dashboard-grid">
+          <aside class="control-rail card">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Runtime Control</p>
+                <h3>运行控制台</h3>
+              </div>
+              <span class="status-pill" :class="{ busy: busy }">{{ busy ? '运行中' : '待命中' }}</span>
             </div>
-          </div>
-          <div id="samplesTable"></div>
-        </section>
 
-        <section class="card">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Result</div>
-              <h3>运行结果</h3>
+            <label>任务</label>
+            <select v-model="selectedTaskId" @change="refreshTaskView">
+              <option v-for="task in tasks" :key="task.task_id" :value="task.task_id">
+                {{ task.task_id }} - {{ task.name_zh }}
+              </option>
+            </select>
+
+            <label>Prompt 设置</label>
+            <select v-model="shot" @change="loadSamples">
+              <option value="zero_shot">zero_shot</option>
+              <option value="one_shot">one_shot</option>
+            </select>
+
+            <label>模型</label>
+            <input v-model="model" placeholder="deepseek-v4-flash">
+
+            <div class="grid-two">
+              <div>
+                <label>样本索引</label>
+                <input v-model.number="sampleIndex" type="number" min="0">
+              </div>
+              <div>
+                <label>预览条数</label>
+                <input v-model.number="sampleLimit" type="number" min="1" max="20">
+              </div>
             </div>
-          </div>
-          <pre id="resultBox">暂未运行。</pre>
-        </section>
-      </section>
 
-      <section class="card">
-        <div class="section-head">
-          <div>
-            <div class="eyebrow">Run History</div>
-            <h3>历史评测记录</h3>
-          </div>
-        </div>
-        <div id="runsTable"></div>
-      </section>
-    </main>
+            <div class="grid-two">
+              <div>
+                <label>批量样本数</label>
+                <input v-model.number="batchSize" type="number" min="1" max="100">
+              </div>
+              <div>
+                <label>超时秒数</label>
+                <input v-model.number="timeout" type="number" min="30" max="300">
+              </div>
+            </div>
+
+            <div class="button-stack">
+              <button class="btn btn-secondary" @click="refreshTaskView">刷新任务信息</button>
+              <button class="btn btn-primary" @click="runSample">运行单条样本</button>
+              <button class="btn btn-primary btn-accent" @click="runBatch">运行批量评测</button>
+            </div>
+
+            <p class="rail-tip">{{ batchSupportText }}</p>
+
+            <div class="status-box">
+              <p class="eyebrow">System Status</p>
+              <pre>{{ statusText }}</pre>
+            </div>
+          </aside>
+
+          <section class="main-stage">
+            <section class="stats-strip">
+              <article class="metric-card card">
+                <div class="stat-label">每任务样本数</div>
+                <div class="metric-value">{{ overview?.examples_per_task || 0 }}</div>
+                <p>LawBench 官方数据统一按 500 条样本组织。</p>
+              </article>
+              <article class="metric-card card">
+                <div class="stat-label">在线自动评测任务</div>
+                <div class="metric-value">{{ overview?.online_batch_tasks?.length || 0 }}</div>
+                <p>当前优先支持单选题在线自动评分闭环。</p>
+              </article>
+              <article class="metric-card card">
+                <div class="stat-label">认知层级</div>
+                <div class="level-list">
+                  <div v-for="item in levelEntries" :key="item.name" class="level-row">
+                    <span>{{ item.name }}</span>
+                    <strong>{{ item.count }}</strong>
+                  </div>
+                </div>
+              </article>
+            </section>
+
+            <section class="card narrative-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Dataset Design</p>
+                  <h3>数据集设计说明</h3>
+                </div>
+                <span class="meta-pill">公开演示内容</span>
+              </div>
+              <div class="rich-content" v-html="overview?.design_doc_html || emptyDoc"></div>
+            </section>
+
+            <section class="card catalog-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Task Matrix</p>
+                  <h3>任务矩阵总览</h3>
+                </div>
+                <span class="meta-pill">{{ tasks.length }} tasks</span>
+              </div>
+              <div class="task-catalog">
+                <button
+                  v-for="task in tasks"
+                  :key="task.task_id"
+                  class="task-tile"
+                  :class="{ active: task.task_id === selectedTaskId }"
+                  @click="selectTask(task.task_id)"
+                >
+                  <div class="task-tile-top">
+                    <strong>{{ task.task_id }}</strong>
+                    <span>{{ task.online_batch ? '在线评测' : '浏览为主' }}</span>
+                  </div>
+                  <h4>{{ task.name_zh }}</h4>
+                  <p>{{ task.level }} · {{ task.metric }} · {{ task.task_type }}</p>
+                </button>
+              </div>
+            </section>
+
+            <section class="detail-grid">
+              <article class="card detail-card">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Task Detail</p>
+                    <h3>{{ selectedTask?.task_id }} {{ selectedTask?.name_zh }}</h3>
+                  </div>
+                  <span class="meta-pill">{{ selectedTask?.metric }} / {{ selectedTask?.task_type }}</span>
+                </div>
+                <div class="rich-content" v-html="selectedTask?.description_html || emptyDoc"></div>
+              </article>
+
+              <article class="card detail-card">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Prompt Shape</p>
+                    <h3>Prompt 结构与预览</h3>
+                  </div>
+                  <span class="meta-pill">{{ shot }}</span>
+                </div>
+                <div class="prompt-block">
+                  <div class="prompt-schema">Prompt 结构：{{ selectedTask?.prompt_schema || '-' }}</div>
+                  <pre>{{ selectedTask?.prompt_preview || '暂未加载。' }}</pre>
+                </div>
+              </article>
+            </section>
+
+            <section class="detail-grid">
+              <article class="card detail-card">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Sample Preview</p>
+                    <h3>样本预览</h3>
+                  </div>
+                  <span class="meta-pill">{{ shot }}</span>
+                </div>
+                <div v-if="samples.length" class="sample-list">
+                  <article v-for="sample in samples" :key="sample.index" class="sample-card">
+                    <div class="sample-head">
+                      <strong>#{{ sample.index }}</strong>
+                      <span>answer: {{ sample.answer }}</span>
+                    </div>
+                    <p><b>instruction</b> {{ sample.instruction }}</p>
+                    <p><b>question</b> {{ sample.question }}</p>
+                  </article>
+                </div>
+                <p v-else class="empty-copy">当前任务暂无样本预览。</p>
+              </article>
+
+              <article class="card detail-card">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Result Console</p>
+                    <h3>运行结果</h3>
+                  </div>
+                  <span class="meta-pill">{{ resultModeLabel }}</span>
+                </div>
+                <pre>{{ resultText }}</pre>
+              </article>
+            </section>
+
+            <section class="card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Run History</p>
+                  <h3>批量评测记录</h3>
+                </div>
+                <span class="meta-pill">仅展示批量评测</span>
+              </div>
+
+              <div v-if="runs.length" class="history-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>任务</th>
+                      <th>Prompt</th>
+                      <th>模型</th>
+                      <th>样本数</th>
+                      <th>准确率</th>
+                      <th>弃权率</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="run in orderedRuns" :key="run.run_id">
+                      <td>{{ run.created_at }}</td>
+                      <td>{{ run.task_id }} {{ run.task_name_zh }}</td>
+                      <td>{{ run.shot }}</td>
+                      <td>{{ run.model }}</td>
+                      <td>{{ run.sample_count }}</td>
+                      <td>{{ run.accuracy }}</td>
+                      <td>{{ run.abstention_rate }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p v-else class="empty-copy">
+                还没有可展示的批量评测记录。这里只显示当前环境中通过“运行批量评测”保存下来的结果，单条样本运行不会进入历史；云端环境重启或缩容后，未做持久化的本地文件记录也可能清空。
+              </p>
+            </section>
+          </section>
+        </section>
+      </main>
+    </div>
   </div>
-  <script src="./app.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.5.18/dist/vue.global.prod.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
