@@ -50,8 +50,8 @@
 
 - 数据基准：`open-compass/LawBench`
 - 模型接口：`DeepSeek API`
-- 后端：`Python` 标准库 HTTP 服务
-- 前端：原生 `HTML / CSS / JavaScript`
+- 后端：`FastAPI`
+- 前端：`Vue 3`
 - 部署：`Dockerfile + GitHub + 腾讯云 CloudBase Run`
 
 ## 6. 技术亮点
@@ -82,8 +82,8 @@
 
 ### 系统层
 
-- 前端展示任务总览、数据集设计、样本、Prompt 结构
-- 后端提供任务概览、单条推理、批量评测、历史记录接口
+- 前端用 `Vue 3` 展示任务总览、数据集设计、样本、Prompt 结构
+- 后端用 `FastAPI` 提供任务概览、单条推理、批量评测、历史记录接口
 - 支持把运行结果保存下来，方便演示和后续对比
 
 ### 部署层
