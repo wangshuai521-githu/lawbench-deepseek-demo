@@ -22,7 +22,9 @@ FRONTEND_ROOT = ROOT / "webapp"
 DOCS_ROOT = ROOT / "docs"
 
 PROMPT_SCHEMA = "instruction + '\\n\\n' + question"
-SINGLE_CHOICE_TASKS = {"1-2", "2-4", "2-8", "3-6"}
+ONLINE_BATCH_TASKS = {"1-2", "2-4", "2-8", "3-6"}
+LETTER_CHOICE_TASKS = {"1-2", "3-6"}
+TEXT_LABEL_TASKS = {"2-4", "2-8"}
 OPTION_LIST = ["A", "B", "C", "D"]
 
 TASK_CATALOG: list[dict[str, Any]] = [
@@ -384,6 +386,20 @@ def normalize_choice_prediction(text: str) -> str:
     return value
 
 
+def normalize_text_label_prediction(text: str) -> str:
+    value = text.strip()
+    patterns = [
+        r"\[类别\]\s*(.*?)\s*<eoa>",
+        r"\[類別\]\s*(.*?)\s*<eoa>",
+        r"\[category\]\s*(.*?)\s*<eoa>",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, value, flags=re.IGNORECASE | re.DOTALL)
+        if match:
+            return match.group(1).strip()
+    return value
+
+
 def score_single_choice(prediction: str, answer_letter: str) -> tuple[int, int]:
     count_dict = {option: 1 if option in prediction else 0 for option in OPTION_LIST}
     if sum(count_dict.values()) == 0:
@@ -391,6 +407,14 @@ def score_single_choice(prediction: str, answer_letter: str) -> tuple[int, int]:
     if count_dict.get(answer_letter, 0) == 1 and sum(count_dict.values()) == 1:
         return 1, 0
     return 0, 0
+
+
+def score_text_label(prediction: str, answer_text: str) -> tuple[int, int]:
+    normalized_prediction = re.sub(r"\s+", "", prediction)
+    normalized_answer = re.sub(r"\s+", "", answer_text)
+    if not normalized_prediction:
+        return 0, 1
+    return (1, 0) if normalized_prediction == normalized_answer else (0, 0)
 
 
 def task_markdown(task_id: str, sample: dict[str, Any]) -> str:
@@ -438,7 +462,7 @@ def benchmark_overview() -> dict[str, Any]:
         "prompt_settings": ["zero_shot", "one_shot"],
         "prompt_schema": PROMPT_SCHEMA,
         "levels": level_counts,
-        "online_batch_tasks": sorted(SINGLE_CHOICE_TASKS),
+        "online_batch_tasks": sorted(ONLINE_BATCH_TASKS),
         "design_doc_html": design_doc_html(),
     }
 
@@ -639,10 +663,14 @@ class Handler(BaseHTTPRequestHandler):
                 answer_letter = ""
                 correct: bool | None = None
 
-                if task_id in SINGLE_CHOICE_TASKS:
+                if task_id in LETTER_CHOICE_TASKS:
                     answer_letter = extract_answer_letter(str(example.get("answer", "")))
                     normalized_prediction = normalize_choice_prediction(raw_output)
                     score, _ = score_single_choice(normalized_prediction, answer_letter)
+                    correct = bool(score)
+                elif task_id in TEXT_LABEL_TASKS:
+                    normalized_prediction = normalize_text_label_prediction(raw_output)
+                    score, _ = score_text_label(normalized_prediction, str(example.get("answer", "")))
                     correct = bool(score)
 
                 self._json(
@@ -671,12 +699,12 @@ class Handler(BaseHTTPRequestHandler):
                 max_samples = int(payload.get("max_samples", 10))
                 timeout = int(payload.get("timeout", 120))
 
-                if task_id not in SINGLE_CHOICE_TASKS:
+                if task_id not in ONLINE_BATCH_TASKS:
                     self._json(
                         400,
                         {
                             "error": (
-                                f"当前在线批量评测仅支持单选任务: {', '.join(sorted(SINGLE_CHOICE_TASKS))}。"
+                                f"当前在线批量评测仅支持任务: {', '.join(sorted(ONLINE_BATCH_TASKS))}。"
                             )
                         },
                     )
@@ -691,10 +719,16 @@ class Handler(BaseHTTPRequestHandler):
                 for index, example in enumerate(examples):
                     prompt = prompt_from_example(example)
                     raw_output = deepseek_chat(prompt, model, timeout=timeout)
-                    prediction = normalize_choice_prediction(raw_output)
+                    if task_id in LETTER_CHOICE_TASKS:
+                        prediction = normalize_choice_prediction(raw_output)
+                    else:
+                        prediction = normalize_text_label_prediction(raw_output)
                     answer = str(example.get("answer", ""))
-                    answer_letter = extract_answer_letter(answer)
-                    score, abstention = score_single_choice(prediction, answer_letter)
+                    answer_letter = extract_answer_letter(answer) if task_id in LETTER_CHOICE_TASKS else ""
+                    if task_id in LETTER_CHOICE_TASKS:
+                        score, abstention = score_single_choice(prediction, answer_letter)
+                    else:
+                        score, abstention = score_text_label(prediction, answer)
                     correct = bool(score)
 
                     predictions[str(index)] = {

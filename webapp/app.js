@@ -1,8 +1,14 @@
 const { createApp, computed } = Vue;
 
 function formatError(error) {
+  if (!error) {
+    return "发生未知错误。";
+  }
+  if (error instanceof Error) {
+    return error.message || String(error);
+  }
   if (error && typeof error === "object") {
-    return error.error || error.detail || JSON.stringify(error, null, 2);
+    return error.error || error.detail || error.message || JSON.stringify(error, null, 2);
   }
   return String(error);
 }

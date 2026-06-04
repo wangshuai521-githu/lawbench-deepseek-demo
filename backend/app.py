@@ -127,10 +127,14 @@ def run_sample(payload: RunSampleRequest):
         answer_letter = ""
         correct: Optional[bool] = None
 
-        if payload.task_id in legacy.SINGLE_CHOICE_TASKS:
+        if payload.task_id in legacy.LETTER_CHOICE_TASKS:
             answer_letter = legacy.extract_answer_letter(str(example.get("answer", "")))
             normalized_prediction = legacy.normalize_choice_prediction(raw_output)
             score, _ = legacy.score_single_choice(normalized_prediction, answer_letter)
+            correct = bool(score)
+        elif payload.task_id in legacy.TEXT_LABEL_TASKS:
+            normalized_prediction = legacy.normalize_text_label_prediction(raw_output)
+            score, _ = legacy.score_text_label(normalized_prediction, str(example.get("answer", "")))
             correct = bool(score)
 
         return {
@@ -153,11 +157,11 @@ def run_sample(payload: RunSampleRequest):
 @app.post("/api/run-batch", response_model=None)
 def run_batch(payload: RunBatchRequest):
     try:
-        if payload.task_id not in legacy.SINGLE_CHOICE_TASKS:
+        if payload.task_id not in legacy.ONLINE_BATCH_TASKS:
             return JSONResponse(
                 status_code=400,
                 content={
-                    "error": f"当前在线批量评测仅支持单选任务: {', '.join(sorted(legacy.SINGLE_CHOICE_TASKS))}。"
+                    "error": f"当前在线批量评测仅支持任务: {', '.join(sorted(legacy.ONLINE_BATCH_TASKS))}。"
                 },
             )
 
@@ -170,10 +174,16 @@ def run_batch(payload: RunBatchRequest):
         for index, example in enumerate(examples):
             prompt = legacy.prompt_from_example(example)
             raw_output = legacy.deepseek_chat(prompt, payload.model, timeout=payload.timeout)
-            prediction = legacy.normalize_choice_prediction(raw_output)
+            if payload.task_id in legacy.LETTER_CHOICE_TASKS:
+                prediction = legacy.normalize_choice_prediction(raw_output)
+            else:
+                prediction = legacy.normalize_text_label_prediction(raw_output)
             answer = str(example.get("answer", ""))
-            answer_letter = legacy.extract_answer_letter(answer)
-            score, abstention = legacy.score_single_choice(prediction, answer_letter)
+            answer_letter = legacy.extract_answer_letter(answer) if payload.task_id in legacy.LETTER_CHOICE_TASKS else ""
+            if payload.task_id in legacy.LETTER_CHOICE_TASKS:
+                score, abstention = legacy.score_single_choice(prediction, answer_letter)
+            else:
+                score, abstention = legacy.score_text_label(prediction, answer)
             correct = bool(score)
 
             predictions[str(index)] = {
