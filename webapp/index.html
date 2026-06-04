@@ -252,6 +252,7 @@
                       <th>样本数</th>
                       <th>准确率</th>
                       <th>弃权率</th>
+                      <th>操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -263,6 +264,9 @@
                       <td>{{ run.sample_count }}</td>
                       <td>{{ run.accuracy }}</td>
                       <td>{{ run.abstention_rate }}</td>
+                      <td>
+                        <button class="table-action-btn" @click="showRunDetail(run.run_id)">查看明细</button>
+                      </td>
                     </tr>
                   </tbody>
                 </table>

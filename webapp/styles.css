@@ -463,6 +463,23 @@ th {
   text-transform: uppercase;
 }
 
+.table-action-btn {
+  width: auto;
+  border: 1px solid rgba(13, 118, 110, 0.22);
+  background: rgba(13, 118, 110, 0.08);
+  color: var(--teal-deep);
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.table-action-btn:hover {
+  background: rgba(13, 118, 110, 0.14);
+}
+
 .rich-content {
   line-height: 1.9;
 }

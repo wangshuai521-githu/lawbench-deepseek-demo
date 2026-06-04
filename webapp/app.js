@@ -70,6 +70,37 @@ createApp({
     setStatus(text) {
       this.statusText = text;
     },
+    formatBatchResultText(run, savedPath = "") {
+      const lines = [
+        `运行 ID: ${run.run_id}`,
+        `任务: ${run.task_id} ${run.task_name_zh}`,
+        `Prompt 设置: ${run.shot}`,
+        `模型: ${run.model}`,
+        `样本数: ${run.sample_count}`,
+        `准确率: ${run.accuracy}`,
+        `弃权率: ${run.abstention_rate}`,
+        `官方预测文件: ${run.prediction_path}`,
+      ];
+
+      if (savedPath || run.saved_path) {
+        lines.push(`应用运行记录: ${savedPath || run.saved_path}`);
+      }
+
+      lines.push("");
+      lines.push("逐题结果：");
+
+      for (const item of run.results || []) {
+        lines.push(
+          `#${item.index} | 标准答案: ${item.gold_choice || item.gold} | 模型预测: ${item.prediction} | 是否正确: ${item.correct}`,
+        );
+      }
+
+      lines.push("");
+      lines.push("说明：上面的 /app/... 路径是云端容器内文件路径，公网浏览器不能直接打开。");
+      lines.push("当前页面已经直接展示了逐题结果，也可以点击下方“批量评测记录”再次查看历史明细。");
+
+      return lines.join("\n");
+    },
     async loadOverview() {
       this.overview = await fetchJson("/api/overview");
     },
@@ -165,19 +196,24 @@ createApp({
             timeout: this.timeout,
           }),
         });
-        this.resultText = [
-          `运行 ID: ${data.run.run_id}`,
-          `任务: ${data.run.task_id} ${data.run.task_name_zh}`,
-          `Prompt 设置: ${data.run.shot}`,
-          `模型: ${data.run.model}`,
-          `样本数: ${data.run.sample_count}`,
-          `准确率: ${data.run.accuracy}`,
-          `弃权率: ${data.run.abstention_rate}`,
-          `官方预测文件: ${data.run.prediction_path}`,
-          `应用运行记录: ${data.saved_path}`,
-        ].join("\n");
+        this.resultText = this.formatBatchResultText(data.run, data.saved_path);
         await this.loadRuns();
-        this.setStatus(`批量评测完成。准确率 ${data.run.accuracy}，结果已写入 predictions 与 outputs 目录。`);
+        this.setStatus(`批量评测完成。准确率 ${data.run.accuracy}，逐题结果已在右侧结果区展示。`);
+      } catch (error) {
+        this.resultText = formatError(error);
+        this.setStatus(formatError(error));
+      } finally {
+        this.busy = false;
+      }
+    },
+    async showRunDetail(runId) {
+      try {
+        this.busy = true;
+        this.resultMode = "历史记录";
+        this.setStatus(`正在加载运行记录 ${runId} 的逐题结果。`);
+        const run = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
+        this.resultText = this.formatBatchResultText(run);
+        this.setStatus(`已加载运行记录 ${runId} 的逐题结果。`);
       } catch (error) {
         this.resultText = formatError(error);
         this.setStatus(formatError(error));
