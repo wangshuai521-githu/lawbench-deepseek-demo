@@ -257,9 +257,10 @@ code {
 
 .dashboard-shell {
   display: grid;
-  grid-template-columns: 324px minmax(0, 1fr) 332px;
+  grid-template-columns: minmax(300px, 324px) minmax(0, 1fr) minmax(280px, 332px);
   gap: 16px;
   margin-top: 16px;
+  align-items: start;
 }
 
 .control-panel,
@@ -273,6 +274,7 @@ code {
   position: sticky;
   top: 18px;
   align-self: start;
+  z-index: 1;
 }
 
 .workspace {
@@ -788,13 +790,18 @@ th {
   gap: 12px;
 }
 
-@media (max-width: 1500px) {
+@media (max-width: 1700px) {
   .dashboard-shell {
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
   }
 
   .insight-panel {
-    grid-column: 1 / -1;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .control-panel {
+    position: static;
   }
 
   .analysis-grid,
@@ -804,7 +811,7 @@ th {
   }
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1280px) {
   .hero-band {
     grid-template-columns: 1fr;
   }
@@ -817,8 +824,9 @@ th {
     grid-template-columns: 1fr;
   }
 
-  .control-panel {
-    position: static;
+  .insight-panel {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .task-catalog,
