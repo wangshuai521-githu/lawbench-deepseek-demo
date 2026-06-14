@@ -1,4 +1,4 @@
-const { createApp, computed } = Vue;
+const { createApp } = Vue;
 
 function formatError(error) {
   if (!error) {
@@ -44,8 +44,8 @@ createApp({
       batchSize: 5,
       timeout: 120,
       busy: false,
-      statusText: "正在初始化 FastAPI + Vue3 演示平台...",
-      resultText: "暂未运行。",
+      statusText: "正在初始化 LawBench 评测控制台...",
+      resultText: "尚未运行。请选择任务后运行单条样本，或对支持的任务发起批量评测。",
       resultMode: "待命",
       emptyDoc: "<p class='empty-copy'>暂无说明文档。</p>",
     };
@@ -59,11 +59,11 @@ createApp({
     },
     batchSupportText() {
       if (!this.selectedTask) {
-        return "在线批量评测当前优先支持单选题任务：1-2、2-4、2-8、3-6。";
+        return "在线批量评测当前优先支持单选题任务，例如 1-2、2-4、2-8、3-6。";
       }
       return this.selectedTask.online_batch
         ? `当前任务 ${this.selectedTask.task_id} 支持在线批量自动评分。`
-        : `当前任务 ${this.selectedTask.task_id} 属于 ${this.selectedTask.task_type} 任务，当前优先开放单条推理展示。`;
+        : `当前任务 ${this.selectedTask.task_id} 属于 ${this.selectedTask.task_type}，当前优先开放单条推理展示。`;
     },
     orderedRuns() {
       return this.runs.slice().reverse();
@@ -103,7 +103,7 @@ createApp({
 
       lines.push("");
       lines.push("说明：上面的 /app/... 路径是云端容器内文件路径，公网浏览器不能直接打开。");
-      lines.push("当前页面已经直接展示了逐题结果，也可以点击下方“批量评测记录”再次查看历史明细。");
+      lines.push("页面已经直接展示逐题结果，也可以在下方批量评测记录中再次查看历史明细。");
 
       return lines.join("\n");
     },
@@ -137,7 +137,7 @@ createApp({
         this.busy = true;
         await this.loadTaskDetail();
         await this.loadSamples();
-        this.setStatus(`已加载任务 ${this.selectedTaskId}，当前可查看样本、运行单条推理或发起批量评测。`);
+        this.setStatus(`已加载任务 ${this.selectedTaskId}，可以查看样本、运行单条推理或发起批量评测。`);
       } catch (error) {
         this.setStatus(formatError(error));
       } finally {
@@ -204,7 +204,7 @@ createApp({
         });
         this.resultText = this.formatBatchResultText(data.run, data.saved_path);
         await this.loadRuns();
-        this.setStatus(`批量评测完成。准确率 ${data.run.accuracy}，逐题结果已在右侧结果区展示。`);
+        this.setStatus(`批量评测完成。准确率 ${data.run.accuracy}，逐题结果已展示。`);
       } catch (error) {
         this.resultText = formatError(error);
         this.setStatus(formatError(error));
