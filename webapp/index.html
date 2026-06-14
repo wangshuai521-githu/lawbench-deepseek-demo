@@ -15,6 +15,9 @@
           <div>
             <p class="eyebrow">FastAPI · Vue 3 · LawBench · DeepSeek</p>
             <h1>LawBench 中文法律模型评测控制台</h1>
+            <p class="header-copy">
+              任务浏览、样本预览、单条推理、批量评分和历史回放都在一个界面里，方便你演示、复盘和继续迭代。
+            </p>
           </div>
         </div>
         <div class="header-actions">
@@ -24,128 +27,177 @@
         </div>
       </header>
 
-      <main class="workspace">
-        <section class="hero-band">
-          <div class="hero-copy">
-            <p class="eyebrow">Benchmark Workbench</p>
-            <h2>{{ overview?.benchmark_name || 'LawBench' }} x DeepSeek</h2>
-            <p class="hero-text">
-              一个面向演示和复盘的中文法律大模型评测界面。你可以浏览 LawBench 任务、预览样本、
-              调用 DeepSeek 运行单条推理，并对支持的选择题任务发起小批量自动评分。
-            </p>
+      <section class="hero-band surface">
+        <div class="hero-copy">
+          <p class="eyebrow">Benchmark Workbench</p>
+          <h2>{{ overview?.benchmark_name || 'LawBench' }} x DeepSeek</h2>
+          <p class="hero-text">
+            这是一个面向中文法律大模型评测的工作台。它保留了原有评测内容，只重新组织展示方式，
+            让任务浏览、结果追踪和历史对比更像一个真正的产品控制台。
+          </p>
+          <div class="hero-chips">
+            <span class="mini-badge">FastAPI API</span>
+            <span class="mini-badge">Vue 3 SPA</span>
+            <span class="mini-badge">在线批量评分</span>
           </div>
-          <div class="hero-metrics" aria-label="平台概览">
-            <article class="hero-metric">
-              <span>任务总数</span>
-              <strong>{{ overview?.task_count || 0 }}</strong>
-            </article>
-            <article class="hero-metric">
-              <span>每任务样本</span>
-              <strong>{{ overview?.examples_per_task || 0 }}</strong>
-            </article>
-            <article class="hero-metric">
-              <span>在线评分</span>
-              <strong>{{ overview?.online_batch_tasks?.length || 0 }}</strong>
-            </article>
+        </div>
+        <div class="hero-board">
+          <article class="hero-metric">
+            <span>任务总数</span>
+            <strong>{{ overview?.task_count || 0 }}</strong>
+          </article>
+          <article class="hero-metric">
+            <span>每任务样本</span>
+            <strong>{{ overview?.examples_per_task || 0 }}</strong>
+          </article>
+          <article class="hero-metric">
+            <span>在线评分</span>
+            <strong>{{ onlineTaskCount }}</strong>
+          </article>
+          <article class="hero-metric">
+            <span>Prompt 方案</span>
+            <strong>{{ promptSettingsText }}</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="dashboard-shell">
+        <aside class="surface control-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Controls</p>
+              <h3>运行控制</h3>
+            </div>
+            <span class="mini-badge">{{ currentViewLabel }}</span>
           </div>
-        </section>
 
-        <section class="layout-grid">
-          <aside class="control-panel surface">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Runtime</p>
-                <h3>评测参数</h3>
-              </div>
-              <span class="mini-badge">{{ shot }}</span>
+          <div class="view-switcher">
+            <button
+              v-for="view in views"
+              :key="view.id"
+              class="switch-pill"
+              :class="{ active: activeView === view.id }"
+              @click="selectView(view.id)"
+            >
+              {{ view.label }}
+            </button>
+          </div>
+
+          <label for="task-search">搜索任务</label>
+          <input id="task-search" v-model="taskSearch" placeholder="任务编号 / 名称 / 类型">
+
+          <label for="task-scope">任务范围</label>
+          <select id="task-scope" v-model="taskScope">
+            <option value="all">全部任务</option>
+            <option value="online">在线评分</option>
+            <option value="offline">浏览任务</option>
+          </select>
+
+          <label for="task-select">任务</label>
+          <select id="task-select" v-model="selectedTaskId" @change="refreshTaskView" :disabled="busy">
+            <option v-for="task in tasks" :key="task.task_id" :value="task.task_id">
+              {{ task.task_id }} - {{ task.name_zh }}
+            </option>
+          </select>
+
+          <label for="shot-select">Prompt 设置</label>
+          <select id="shot-select" v-model="shot" @change="loadSamples" :disabled="busy">
+            <option value="zero_shot">zero_shot</option>
+            <option value="one_shot">one_shot</option>
+          </select>
+
+          <label for="model-input">模型</label>
+          <input id="model-input" v-model="model" placeholder="deepseek-v4-flash" :disabled="busy">
+
+          <div class="field-grid">
+            <div>
+              <label for="sample-index">样本索引</label>
+              <input id="sample-index" v-model.number="sampleIndex" type="number" min="0" :disabled="busy">
             </div>
-
-            <label for="task-select">任务</label>
-            <select id="task-select" v-model="selectedTaskId" @change="refreshTaskView" :disabled="busy">
-              <option v-for="task in tasks" :key="task.task_id" :value="task.task_id">
-                {{ task.task_id }} - {{ task.name_zh }}
-              </option>
-            </select>
-
-            <label for="shot-select">Prompt 设置</label>
-            <select id="shot-select" v-model="shot" @change="loadSamples" :disabled="busy">
-              <option value="zero_shot">zero_shot</option>
-              <option value="one_shot">one_shot</option>
-            </select>
-
-            <label for="model-input">模型</label>
-            <input id="model-input" v-model="model" placeholder="deepseek-v4-flash" :disabled="busy">
-
-            <div class="field-grid">
-              <div>
-                <label for="sample-index">样本索引</label>
-                <input id="sample-index" v-model.number="sampleIndex" type="number" min="0" :disabled="busy">
-              </div>
-              <div>
-                <label for="sample-limit">预览条数</label>
-                <input id="sample-limit" v-model.number="sampleLimit" type="number" min="1" max="20" :disabled="busy">
-              </div>
+            <div>
+              <label for="sample-limit">预览条数</label>
+              <input id="sample-limit" v-model.number="sampleLimit" type="number" min="1" max="20" :disabled="busy">
             </div>
+          </div>
 
-            <div class="field-grid">
-              <div>
-                <label for="batch-size">批量样本</label>
-                <input id="batch-size" v-model.number="batchSize" type="number" min="1" max="100" :disabled="busy">
-              </div>
-              <div>
-                <label for="timeout-input">超时秒数</label>
-                <input id="timeout-input" v-model.number="timeout" type="number" min="30" max="300" :disabled="busy">
-              </div>
+          <div class="field-grid">
+            <div>
+              <label for="batch-size">批量样本</label>
+              <input id="batch-size" v-model.number="batchSize" type="number" min="1" max="100" :disabled="busy">
             </div>
-
-            <div class="action-stack">
-              <button class="btn btn-ghost" @click="refreshTaskView" :disabled="busy">刷新任务</button>
-              <button class="btn btn-primary" @click="runSample" :disabled="busy">运行单条样本</button>
-              <button class="btn btn-accent" @click="runBatch" :disabled="busy || !selectedTask?.online_batch">运行批量评测</button>
+            <div>
+              <label for="timeout-input">超时秒数</label>
+              <input id="timeout-input" v-model.number="timeout" type="number" min="30" max="300" :disabled="busy">
             </div>
+          </div>
 
-            <p class="panel-note">{{ batchSupportText }}</p>
+          <div class="action-stack">
+            <button class="btn btn-ghost" @click="refreshTaskView" :disabled="busy">↻ 刷新任务</button>
+            <button class="btn btn-primary" @click="runSample" :disabled="busy">▶ 运行单条样本</button>
+            <button class="btn btn-accent" @click="runBatch" :disabled="busy || !selectedTask?.online_batch">⚡ 运行批量评测</button>
+          </div>
 
-            <div class="status-console">
-              <p class="eyebrow">Status</p>
-              <pre>{{ statusText }}</pre>
-            </div>
-          </aside>
+          <p class="panel-note">{{ taskScope === 'online' ? '当前只看支持在线评分的任务。' : batchSupportText }}</p>
 
-          <section class="main-stage">
-            <section class="metric-grid">
-              <article class="metric-card surface">
-                <span class="metric-label">Prompt 方案</span>
-                <strong>{{ promptSettingsText }}</strong>
-                <p>同时保留 zero-shot 与 one-shot 入口，方便对比不同提示策略的表现。</p>
-              </article>
-              <article class="metric-card surface">
-                <span class="metric-label">认知层级</span>
-                <div class="level-list">
-                  <div v-for="item in levelEntries" :key="item.name" class="level-row">
+          <div class="status-console">
+            <p class="eyebrow">Status</p>
+            <pre>{{ statusText }}</pre>
+          </div>
+        </aside>
+
+        <main class="workspace">
+          <section v-show="activeView === 'overview'" class="view-stack">
+            <div class="analysis-grid">
+              <article class="surface panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Coverage</p>
+                    <h3>认知层级覆盖</h3>
+                  </div>
+                  <span class="mini-badge">{{ levelBars.length }} levels</span>
+                </div>
+                <div class="bar-list">
+                  <div v-for="item in levelBars" :key="item.name" class="bar-row">
                     <span>{{ item.name }}</span>
+                    <div class="bar-track">
+                      <span class="bar-fill" :style="{ width: item.percent + '%' }"></span>
+                    </div>
                     <strong>{{ item.count }}</strong>
                   </div>
                 </div>
               </article>
-              <article class="metric-card surface metric-card--focus">
-                <span class="metric-label">当前任务</span>
-                <strong>{{ selectedTask?.task_id || '-' }} {{ selectedTask?.name_zh || '' }}</strong>
-                <p>{{ selectedTask?.metric || '-' }} · {{ selectedTask?.task_type || '-' }}</p>
-              </article>
-            </section>
 
-            <section class="surface task-matrix">
+              <article class="surface panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Types</p>
+                    <h3>任务类型分布</h3>
+                  </div>
+                  <span class="mini-badge">{{ taskTypeBuckets.length }} groups</span>
+                </div>
+                <div class="family-grid">
+                  <div v-for="item in taskTypeBuckets" :key="item.name" class="family-item">
+                    <span>{{ item.name }}</span>
+                    <div class="family-track">
+                      <span class="family-fill" :style="{ width: Math.max(12, Math.round((item.count / taskTypeMax) * 100)) + '%' }"></span>
+                    </div>
+                    <strong>{{ item.count }}</strong>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <article class="surface panel">
               <div class="section-head">
                 <div>
-                  <p class="eyebrow">Task Matrix</p>
+                  <p class="eyebrow">Task Browser</p>
                   <h3>任务矩阵</h3>
                 </div>
-                <span class="mini-badge">{{ tasks.length }} tasks</span>
+                <span class="mini-badge">{{ filteredTaskCount }} / {{ tasks.length }}</span>
               </div>
               <div class="task-catalog">
                 <button
-                  v-for="task in tasks"
+                  v-for="task in filteredTasks"
                   :key="task.task_id"
                   class="task-tile"
                   :class="{ active: task.task_id === selectedTaskId }"
@@ -153,28 +205,58 @@
                   :disabled="busy"
                 >
                   <span class="task-id">{{ task.task_id }}</span>
-                  <span class="task-state" :class="{ online: task.online_batch }">
-                    {{ task.online_batch ? '可评分' : '可浏览' }}
-                  </span>
+                  <span class="task-state" :class="{ online: task.online_batch }">{{ taskCardLabel(task) }}</span>
                   <strong>{{ task.name_zh }}</strong>
                   <small>{{ task.level }} · {{ task.metric }} · {{ task.task_type }}</small>
                 </button>
               </div>
-            </section>
+            </article>
 
-            <section class="content-grid">
-              <article class="surface content-panel">
+            <article class="surface panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Snapshot</p>
+                  <h3>当前任务快照</h3>
+                </div>
+                <span class="mini-badge">{{ selectedTaskIndex ? `#${selectedTaskIndex}` : '-' }}</span>
+              </div>
+              <div class="snapshot-grid">
+                <div class="snapshot-facts">
+                  <div v-for="fact in selectedTaskSummary" :key="fact.label" class="fact-row">
+                    <span>{{ fact.label }}</span>
+                    <strong>{{ fact.value }}</strong>
+                  </div>
+                </div>
+                <div class="rich-content" v-html="selectedTask?.description_html || emptyDoc"></div>
+              </div>
+            </article>
+
+            <article class="surface panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Design</p>
+                  <h3>数据集设计说明</h3>
+                </div>
+                <span class="mini-badge">LawBench</span>
+              </div>
+              <div class="rich-content doc-frame" v-html="overview?.design_doc_html || emptyDoc"></div>
+            </article>
+          </section>
+
+          <section v-show="activeView === 'workspace'" class="view-stack">
+            <div class="detail-grid">
+              <article class="surface panel">
                 <div class="section-head">
                   <div>
                     <p class="eyebrow">Task Detail</p>
                     <h3>{{ selectedTask?.task_id }} {{ selectedTask?.name_zh }}</h3>
                   </div>
-                  <span class="mini-badge">{{ selectedTask?.online_batch ? '支持批量评分' : '展示任务' }}</span>
+                  <span class="mini-badge">{{ taskMetaLine }}</span>
                 </div>
                 <div class="rich-content" v-html="selectedTask?.description_html || emptyDoc"></div>
               </article>
 
-              <article class="surface content-panel">
+              <article class="surface panel">
                 <div class="section-head">
                   <div>
                     <p class="eyebrow">Prompt</p>
@@ -187,10 +269,10 @@
                   <pre>{{ selectedTask?.prompt_preview || '暂无 Prompt 预览。' }}</pre>
                 </div>
               </article>
-            </section>
+            </div>
 
-            <section class="content-grid content-grid--wide">
-              <article class="surface content-panel sample-panel">
+            <div class="detail-grid detail-grid--split">
+              <article class="surface panel">
                 <div class="section-head">
                   <div>
                     <p class="eyebrow">Samples</p>
@@ -211,7 +293,7 @@
                 <p v-else class="empty-copy">当前任务暂无样本预览。</p>
               </article>
 
-              <article class="surface content-panel result-panel">
+              <article class="surface result-panel">
                 <div class="section-head">
                   <div>
                     <p class="eyebrow">Result</p>
@@ -221,65 +303,174 @@
                 </div>
                 <pre>{{ resultText }}</pre>
               </article>
-            </section>
-
-            <section class="surface doc-panel">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">Dataset Design</p>
-                  <h3>数据集设计说明</h3>
-                </div>
-                <span class="mini-badge">LawBench</span>
-              </div>
-              <div class="rich-content" v-html="overview?.design_doc_html || emptyDoc"></div>
-            </section>
-
-            <section class="surface history-panel">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">History</p>
-                  <h3>批量评测记录</h3>
-                </div>
-                <span class="mini-badge">{{ runs.length }} runs</span>
-              </div>
-
-              <div v-if="runs.length" class="history-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>时间</th>
-                      <th>任务</th>
-                      <th>Prompt</th>
-                      <th>模型</th>
-                      <th>样本数</th>
-                      <th>准确率</th>
-                      <th>弃权率</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="run in orderedRuns" :key="run.run_id">
-                      <td>{{ run.created_at }}</td>
-                      <td>{{ run.task_id }} {{ run.task_name_zh }}</td>
-                      <td>{{ run.shot }}</td>
-                      <td>{{ run.model }}</td>
-                      <td>{{ run.sample_count }}</td>
-                      <td>{{ run.accuracy }}</td>
-                      <td>{{ run.abstention_rate }}</td>
-                      <td>
-                        <button class="table-action-btn" @click="showRunDetail(run.run_id)" :disabled="busy">查看明细</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p v-else class="empty-copy">
-                还没有可展示的批量评测记录。运行一次批量评测后，这里会展示准确率、弃权率和逐题结果。
-              </p>
-            </section>
+            </div>
           </section>
-        </section>
-      </main>
+
+          <section v-show="activeView === 'history'" class="view-stack">
+            <div class="history-grid">
+              <article class="surface panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">History</p>
+                    <h3>批量评测记录</h3>
+                  </div>
+                  <span class="mini-badge">{{ runs.length }} runs</span>
+                </div>
+
+                <div v-if="runs.length" class="history-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>时间</th>
+                        <th>任务</th>
+                        <th>Prompt</th>
+                        <th>模型</th>
+                        <th>样本数</th>
+                        <th>准确率</th>
+                        <th>弃权率</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="run in orderedRuns" :key="run.run_id">
+                        <td>{{ run.created_at }}</td>
+                        <td>{{ run.task_id }} {{ run.task_name_zh }}</td>
+                        <td>{{ run.shot }}</td>
+                        <td>{{ run.model }}</td>
+                        <td>{{ run.sample_count }}</td>
+                        <td>{{ run.accuracy }}</td>
+                        <td>{{ run.abstention_rate }}</td>
+                        <td>
+                          <button class="table-action-btn" @click="showRunDetail(run.run_id)" :disabled="busy">查看明细</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p v-else class="empty-copy">
+                  还没有可展示的批量评测记录。运行一次批量评测后，这里会展示准确率、弃权率和逐题结果。
+                </p>
+              </article>
+
+              <article class="surface panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Selected Run</p>
+                    <h3>{{ selectedRun?.run_id || '暂无记录' }}</h3>
+                  </div>
+                  <span class="mini-badge">{{ selectedRun?.shot || '-' }}</span>
+                </div>
+
+                <div v-if="selectedRun" class="run-summary">
+                  <div class="run-summary-grid">
+                    <div class="summary-stat">
+                      <span>任务</span>
+                      <strong>{{ selectedRun.task_id }}</strong>
+                    </div>
+                    <div class="summary-stat">
+                      <span>样本</span>
+                      <strong>{{ selectedRun.sample_count }}</strong>
+                    </div>
+                    <div class="summary-stat">
+                      <span>准确率</span>
+                      <strong>{{ selectedRun.accuracy }}</strong>
+                    </div>
+                    <div class="summary-stat">
+                      <span>弃权率</span>
+                      <strong>{{ selectedRun.abstention_rate }}</strong>
+                    </div>
+                  </div>
+                  <p class="panel-note">{{ selectedRun.task_name_zh }} · {{ selectedRun.model }}</p>
+                  <div class="run-result-list">
+                    <article v-for="item in selectedRunResults" :key="item.index" class="run-result-item">
+                      <div class="run-result-head">
+                        <strong>#{{ item.index }}</strong>
+                        <span>正确：{{ item.correct }}</span>
+                      </div>
+                      <p><b>答案</b>{{ item.gold_choice || item.gold }}</p>
+                      <p><b>预测</b>{{ item.prediction }}</p>
+                    </article>
+                  </div>
+                </div>
+                <p v-else class="empty-copy">选择一条历史记录后，这里会展示该次评测的逐题明细。</p>
+              </article>
+            </div>
+
+            <article class="surface panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Recent</p>
+                  <h3>最近运行</h3>
+                </div>
+                <span class="mini-badge">{{ recentRuns.length }} items</span>
+              </div>
+              <div class="recent-grid">
+                <button
+                  v-for="run in recentRuns"
+                  :key="run.run_id"
+                  class="recent-card"
+                  @click="focusRun(run.run_id)"
+                >
+                  <strong>{{ run.task_id }}</strong>
+                  <span>{{ run.shot }} · {{ run.model }}</span>
+                  <small>{{ run.created_at }}</small>
+                </button>
+              </div>
+            </article>
+          </section>
+        </main>
+
+        <aside class="surface insight-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Live Insight</p>
+              <h3>实时洞察</h3>
+            </div>
+            <span class="mini-badge">{{ currentViewLabel }}</span>
+          </div>
+
+          <div class="insight-stack">
+            <div class="insight-block">
+              <span>当前任务</span>
+              <strong>{{ selectedTask?.task_id || '-' }}</strong>
+              <small>{{ selectedTask?.name_zh || '请选择一个任务' }}</small>
+            </div>
+            <div class="insight-block">
+              <span>任务位置</span>
+              <strong>{{ selectedTaskIndex ? `#${selectedTaskIndex}` : '-' }}</strong>
+              <small>{{ taskMetaLine }}</small>
+            </div>
+            <div class="insight-block">
+              <span>控制台状态</span>
+              <strong>{{ busy ? '忙碌' : '空闲' }}</strong>
+              <small>{{ batchSupportText }}</small>
+            </div>
+            <div class="insight-block">
+              <span>Prompt 方案</span>
+              <strong>{{ promptSettingsText }}</strong>
+              <small>zero-shot / one-shot</small>
+            </div>
+          </div>
+
+          <div class="recent-slim">
+            <p class="eyebrow">Quick Runs</p>
+            <button
+              v-for="run in recentRuns"
+              :key="run.run_id"
+              class="slim-run"
+              @click="focusRun(run.run_id)"
+            >
+              <strong>{{ run.task_id }}</strong>
+              <span>{{ run.accuracy }}</span>
+            </button>
+          </div>
+
+          <div class="status-console status-console--soft">
+            <p class="eyebrow">Status</p>
+            <pre>{{ statusText }}</pre>
+          </div>
+        </aside>
+      </section>
     </div>
   </div>
 

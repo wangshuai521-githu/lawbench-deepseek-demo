@@ -1,30 +1,33 @@
 const { createApp } = Vue;
 
 function formatError(error) {
-  if (!error) {
-    return "发生未知错误。";
-  }
-  if (error instanceof Error) {
-    return error.message || String(error);
-  }
+  if (!error) return "发生未知错误。";
+  if (error instanceof Error) return error.message || String(error);
   if (error && typeof error === "object") {
     return error.error || error.detail || error.message || JSON.stringify(error, null, 2);
   }
   return String(error);
 }
 
+function normalizeText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
   const text = await response.text();
   let data = {};
+
   try {
     data = text ? JSON.parse(text) : {};
   } catch {
     data = { error: text };
   }
+
   if (!response.ok) {
     throw new Error(data.error || data.detail || text || "请求失败");
   }
+
   return data;
 }
 
@@ -44,29 +47,110 @@ createApp({
       batchSize: 5,
       timeout: 120,
       busy: false,
-      statusText: "正在初始化 LawBench 评测控制台...",
+      statusText: "正在初始化 LawBench 控制台...",
       resultText: "尚未运行。请选择任务后运行单条样本，或对支持的任务发起批量评测。",
       resultMode: "待命",
       emptyDoc: "<p class='empty-copy'>暂无说明文档。</p>",
+      activeView: "overview",
+      taskSearch: "",
+      taskScope: "all",
+      selectedRunId: "",
     };
   },
   computed: {
+    views() {
+      return [
+        { id: "overview", label: "概览" },
+        { id: "workspace", label: "工作区" },
+        { id: "history", label: "历史" },
+      ];
+    },
     promptSettingsText() {
       return (this.overview?.prompt_settings || []).join(" / ") || "-";
     },
     levelEntries() {
       return Object.entries(this.overview?.levels || {}).map(([name, count]) => ({ name, count }));
     },
-    batchSupportText() {
-      if (!this.selectedTask) {
-        return "在线批量评测当前优先支持单选题任务，例如 1-2、2-4、2-8、3-6。";
+    levelMax() {
+      return Math.max(...this.levelEntries.map((item) => item.count), 1);
+    },
+    levelBars() {
+      return this.levelEntries.map((item) => ({
+        ...item,
+        percent: Math.max(10, Math.round((item.count / this.levelMax) * 100)),
+      }));
+    },
+    taskTypeBuckets() {
+      const buckets = new Map();
+      for (const task of this.tasks) {
+        const key = task.task_type || "未知类型";
+        buckets.set(key, (buckets.get(key) || 0) + 1);
       }
-      return this.selectedTask.online_batch
-        ? `当前任务 ${this.selectedTask.task_id} 支持在线批量自动评分。`
-        : `当前任务 ${this.selectedTask.task_id} 属于 ${this.selectedTask.task_type}，当前优先开放单条推理展示。`;
+      return Array.from(buckets, ([name, count]) => ({ name, count }));
+    },
+    taskTypeMax() {
+      return Math.max(...this.taskTypeBuckets.map((item) => item.count), 1);
+    },
+    filteredTasks() {
+      const keyword = normalizeText(this.taskSearch);
+      return this.tasks.filter((task) => {
+        const matchesSearch =
+          !keyword ||
+          normalizeText(
+            `${task.task_id} ${task.name_zh} ${task.level} ${task.metric} ${task.task_type} ${task.prompt_schema}`,
+          ).includes(keyword);
+        const matchesScope =
+          this.taskScope === "all"
+            ? true
+            : this.taskScope === "online"
+              ? Boolean(task.online_batch)
+              : !task.online_batch;
+        return matchesSearch && matchesScope;
+      });
+    },
+    filteredTaskCount() {
+      return this.filteredTasks.length;
+    },
+    onlineTaskCount() {
+      return this.tasks.filter((task) => task.online_batch).length;
+    },
+    offlineTaskCount() {
+      return Math.max(this.tasks.length - this.onlineTaskCount, 0);
+    },
+    selectedTaskIndex() {
+      const index = this.tasks.findIndex((task) => task.task_id === this.selectedTaskId);
+      return index >= 0 ? index + 1 : 0;
+    },
+    selectedTaskSummary() {
+      if (!this.selectedTask) {
+        return [];
+      }
+      return [
+        { label: "任务编号", value: this.selectedTask.task_id },
+        { label: "任务类型", value: this.selectedTask.task_type },
+        { label: "评测指标", value: this.selectedTask.metric },
+        { label: "认知层级", value: this.selectedTask.level },
+        { label: "模式", value: this.selectedTask.online_batch ? "在线评分" : "浏览为主" },
+      ];
+    },
+    taskMetaLine() {
+      if (!this.selectedTask) return "-";
+      return `${this.selectedTask.level} · ${this.selectedTask.metric} · ${this.selectedTask.task_type}`;
+    },
+    currentViewLabel() {
+      return this.views.find((view) => view.id === this.activeView)?.label || "概览";
     },
     orderedRuns() {
       return this.runs.slice().reverse();
+    },
+    recentRuns() {
+      return this.orderedRuns.slice(0, 3);
+    },
+    selectedRun() {
+      return this.runs.find((run) => run.run_id === this.selectedRunId) || this.orderedRuns[0] || null;
+    },
+    selectedRunResults() {
+      return this.selectedRun?.results || [];
     },
     resultModeLabel() {
       return this.resultMode;
@@ -75,6 +159,22 @@ createApp({
   methods: {
     setStatus(text) {
       this.statusText = text;
+    },
+    levelWidth(count) {
+      return `${Math.max(10, Math.round((count / this.levelMax) * 100))}%`;
+    },
+    taskCardLabel(task) {
+      return task.online_batch ? "可评分" : "可浏览";
+    },
+    selectView(viewId) {
+      this.activeView = viewId;
+      if (viewId === "history" && !this.selectedRunId && this.orderedRuns.length) {
+        this.selectedRunId = this.orderedRuns[0].run_id;
+      }
+    },
+    focusRun(runId) {
+      this.selectedRunId = runId;
+      this.activeView = "history";
     },
     formatBatchResultText(run, savedPath = "") {
       const lines = [
@@ -131,6 +231,9 @@ createApp({
     async loadRuns() {
       const data = await fetchJson("/api/runs");
       this.runs = data.runs || [];
+      if (!this.selectedRunId && this.orderedRuns.length) {
+        this.selectedRunId = this.orderedRuns[0].run_id;
+      }
     },
     async refreshTaskView() {
       try {
@@ -203,6 +306,8 @@ createApp({
           }),
         });
         this.resultText = this.formatBatchResultText(data.run, data.saved_path);
+        this.selectedRunId = data.run.run_id;
+        this.activeView = "history";
         await this.loadRuns();
         this.setStatus(`批量评测完成。准确率 ${data.run.accuracy}，逐题结果已展示。`);
       } catch (error) {
@@ -218,6 +323,7 @@ createApp({
         this.resultMode = "历史记录";
         this.setStatus(`正在加载运行记录 ${runId} 的逐题结果。`);
         const run = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
+        this.selectedRunId = runId;
         this.resultText = this.formatBatchResultText(run);
         this.setStatus(`已加载运行记录 ${runId} 的逐题结果。`);
       } catch (error) {
